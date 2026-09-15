@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI 性格测评</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --primary:#4A6CF7;--primary-light:#6B8AFF;--primary-dark:#3451B2;
+    --bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text-sec:#6b7280;
+    --border:#e5e7eb;--radius:12px;--shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;align-items:center}
+
+  /* ===== App Container ===== */
+  .app{width:100%;max-width:700px;min-height:100vh;background:var(--card);margin:0 auto;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  @media(min-width:701px){.app{min-height:600px;border-radius:0;max-height:90vh;overflow-y:auto}}
+
+  /* ===== Welcome Page ===== */
+  .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;text-align:center}
+  @media(min-width:701px){.welcome{min-height:600px}}
+  .welcome-logo{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;margin-bottom:24px;box-shadow:0 4px 16px rgba(74,108,247,.3)}
+  .welcome h1{font-size:28px;font-weight:700;margin-bottom:8px}
+  .welcome .subtitle{font-size:16px;color:var(--text-sec);margin-bottom:8px}
+  .welcome .time-hint{font-size:14px;color:var(--text-sec);margin-bottom:32px;display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;padding:6px 16px;border-radius:20px}
+  .welcome .time-hint::before{content:"⏱";font-size:16px}
+  .welcome .features{display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap;justify-content:center}
+  .welcome .feature-chip{font-size:13px;color:var(--primary);background:#EEF2FF;padding:6px 14px;border-radius:8px}
+  .btn-primary{background:var(--primary);color:#fff;border:none;padding:14px 48px;font-size:17px;border-radius:var(--radius);cursor:pointer;transition:all .2s;font-weight:600;box-shadow:0 4px 12px rgba(74,108,247,.3)}
+  .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 16px rgba(74,108,247,.4)}
+  .btn-primary:active{transform:translateY(0)}
+
+  /* ===== Quiz Page ===== */
+  .quiz{display:none;flex-direction:column;min-height:100vh;padding:24px}
+  @media(min-width:701px){.quiz{min-height:600px}}
+  .quiz-header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .progress-bar{flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:4px;transition:width .3s ease;width:0}
+  .progress-text{font-size:14px;color:var(--text-sec);white-space:nowrap;font-weight:600}
+  .question-area{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .question-num{font-size:14px;color:var(--primary);font-weight:600;margin-bottom:8px}
+  .question-text{font-size:20px;line-height:1.6;margin-bottom:28px;font-weight:500}
+  .options{display:flex;flex-direction:column;gap:12px}
+  .option-btn{display:flex;align-items:center;gap:14px;padding:18px 20px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .25s;background:#fff;text-align:left;font-size:16px;line-height:1.5;color:var(--text)}
+  .option-btn:hover{border-color:var(--primary);background:#F5F7FF}
+  .option-btn.selected{border-color:var(--primary);background:#EEF2FF;box-shadow:0 0 0 3px rgba(74,108,247,.12)}
+  .option-btn .opt-key{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--text-sec);transition:all .25s}
+  .option-btn:hover .opt-key,.option-btn.selected .opt-key{border-color:var(--primary);background:var(--primary);color:#fff}
+  .quiz-nav{display:flex;gap:12px;margin-top:20px}
+  .btn-back{background:#f3f4f6;color:var(--text-sec);border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s}
+  .btn-back:hover{background:#e5e7eb}
+  .btn-back:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ===== Result Page ===== */
+  .result{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:40px 24px;text-align:center}
+  @media(min-width:701px){.result{min-height:600px}}
+  .result-badge{font-size:14px;color:var(--primary);font-weight:600;background:#EEF2FF;padding:6px 18px;border-radius:20px;margin-bottom:20px}
+  .result-type{font-size:56px;font-weight:800;letter-spacing:4px;color:var(--primary);margin-bottom:6px;line-height:1.1}
+  .result-name{font-size:22px;font-weight:600;margin-bottom:28px}
+  .dim-bars{width:100%;max-width:420px;margin-bottom:28px}
+  .dim-bar{margin-bottom:16px}
+  .dim-label{display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:6px}
+  .dim-label .dim-active{color:var(--primary)}
+  .dim-label .dim-inactive{color:var(--text-sec)}
+  .dim-track{height:24px;background:#f3f4f6;border-radius:12px;overflow:hidden;display:flex}
+  .dim-fill-left{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-light));transition:width .6s ease;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:600}
+  .dim-fill-right{height:100%;background:#e0e3eb;transition:width .6s ease;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-sec);font-weight:600}
+  .result-desc{background:#f9fafb;border-radius:12px;padding:24px;width:100%;max-width:480px;text-align:left;font-size:15px;line-height:1.8;color:var(--text);margin-bottom:28px}
+  .result-desc .desc-title{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--text)}
+  .result-desc .desc-section{margin-bottom:10px}
+  .result-desc .desc-section strong{color:var(--primary)}
+
+  /* ===== Animations ===== */
+  .fade-in{animation:fadeIn .4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .slide-in{animation:slideIn .3s ease}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ===== Welcome Page ===== -->
+  <div class="welcome" id="page-welcome">
+    <div class="welcome-logo">🧠</div>
+    <h1>MBTI 性格测评</h1>
+    <p class="subtitle">15 题快速了解你的性格类型</p>
+    <div class="time-hint">约需 3-5 分钟</div>
+    <div class="features">
+      <span class="feature-chip">✓ 无需注册</span>
+      <span class="feature-chip">✓ 数据不保存</span>
+      <span class="feature-chip">✓ 即开即用</span>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">开始测评</button>
+  </div>
+
+  <!-- ===== Quiz Page ===== -->
+  <div class="quiz" id="page-quiz">
+    <div class="quiz-header">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">1 / 15</div>
+    </div>
+    <div class="question-area" id="questionArea">
+      <!-- 动态生成 -->
+    </div>
+    <div class="quiz-nav">
+      <button class="btn-back" id="btnBack" onclick="goPrev()" disabled>← 上一题</button>
+    </div>
+  </div>
+
+  <!-- ===== Result Page ===== -->
+  <div class="result" id="page-result">
+    <div class="result-badge">测评完成</div>
+    <div class="result-type" id="resultType">INTJ</div>
+    <div class="result-name" id="resultName">建筑师</div>
+    <div class="dim-bars" id="dimBars"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <button class="btn-primary" onclick="resetQuiz()">重新测评</button>
+  </div>
+
+</div>
+
+<script>
+// ==================== 题库 ====================
+var questions = [
+  // E/I 维度 (4题)
+  {dim:'EI',a:'E',b:'I',q:'参加完一场热闹的团建活动后，你的感受是？',aText:'意犹未尽，还想和大家继续交流',bText:'有点累，想找个安静的地方休息一下'},
+  {dim:'EI',a:'E',b:'I',q:'在团队讨论中，你通常？',aText:'边说边想，通过表达来梳理思路',bText:'先在心里想清楚，再发言表达'},
+  {dim:'EI',a:'E',b:'I',q:'周末没有工作安排时，你更倾向于？',aText:'约朋友聚会或参加社交活动',bText:'独自看书、追剧或做喜欢的事'},
+  {dim:'EI',a:'E',b:'I',q:'到了一个新公司，你通常会？',aText:'很快和同事熟悉起来，主动打招呼',bText:'先观察一段时间，慢慢融入团队'},
+
+  // S/N 维度 (4题)
+  {dim:'SN',a:'S',b:'N',q:'看一份项目方案时，你最关注？',aText:'具体的执行步骤和落地细节',bText:'方案的创新性和未来想象空间'},
+  {dim:'SN',a:'S',b:'N',q:'学习一个新工具时，你更喜欢？',aText:'按操作手册一步步来，确保每步都对',bText:'先摸索整体逻辑，再自己尝试各种功能'},
+  {dim:'SN',a:'S',b:'N',q:'同事问你一个问题，你通常回答？',aText:'基于经验和事实，给出具体可行的方法',bText:'给出几种可能性，启发对方自己思考'},
+  {dim:'SN',a:'S',b:'N',q:'回忆一次旅行，你先想到的是？',aText:'具体的场景：吃过的美食、走过的路线',bText:'整体的感受：那趟旅行带给你的意义'},
+
+  // T/F 维度 (4题)
+  {dim:'TF',a:'T',b:'F',q:'同事工作出了错，你的第一反应是？',aText:'分析错在哪里、怎么修正、如何避免再犯',bText:'先关心对方的感受，再一起想办法解决'},
+  {dim:'TF',a:'T',b:'F',q:'做决定时，你更看重？',aText:'逻辑是否通顺、利弊是否清晰',bText:'这个决定对涉及的人有什么影响'},
+  {dim:'TF',a:'T',b:'F',q:'朋友向你倾诉烦恼，你倾向于？',aText:'帮他分析问题，给出解决建议',bText:'先共情他的感受，陪伴他度过情绪'},
+  {dim:'TF',a:'T',b:'F',q:'评价一个方案好坏时，你认为更重要是？',aText:'客观分析优缺点，就事论事',bText:'考虑团队成员的感受和接受程度'},
+
+  // J/P 维度 (3题)
+  {dim:'JP',a:'J',b:'P',q:'面对一个即将到期的任务，你通常？',aText:'提前规划好时间，按计划推进，最好提前完成',bText:'在截止日期临近时灵感最足，冲刺完成'},
+  {dim:'JP',a:'J',b:'P',q:'出差前收拾行李，你倾向于？',aText:'列好清单，提前打包，确认不遗漏',bText:'最后一刻快速塞进去，缺了再买'},
+  {dim:'JP',a:'J',b:'P',q:'对于规则和计划，你的态度是？',aText:'有计划才有安全感，喜欢按部就班',bText:'计划赶不上变化，灵活应对更自在'}
+];
+
+// ==================== 16种MBTI类型描述 ====================
+var mbtiTypes = {
+  INTJ:{name:'建筑师',desc:'你是富有战略眼光的独立思考者。善于看到事物背后的逻辑和规律，喜欢制定长远计划并高效执行。工作中，你追求专业深度，对自己的领域有极高的标准。你的直觉（N）让你看到别人忽略的可能性，而判断（J）让你有强大的执行力把想法落地。',strengths:'善于全局思考、独立解决问题、对复杂系统有强洞察力。',work:'适合需要深度分析和战略规划的工作，在混乱中能迅速找到方向。'},
+  INTP:{name:'逻辑学家',desc:'你是充满好奇心的理论构建者。喜欢探索事物的本质原理，对抽象思维和逻辑推理有天然热情。工作中，你擅长发现问题、提出创新方案，但不太喜欢重复性事务。你的分析能力让你在面对复杂问题时游刃有余。',strengths:'逻辑严密、善于创新分析、对知识有深度渴求。',work:'适合研究和分析型工作，在需要突破常规思维的场景中表现出色。'},
+  ENTJ:{name:'指挥官',desc:'你是天生的领导者，果断且充满行动力。善于统筹全局、制定策略并推动团队执行。工作中，你目标导向明确，不怕做困难决策，有很强的效率和结果意识。你的外向（E）让你善于沟通，判断（J）让你雷厉风行。',strengths:'领导力强、目标导向、高效决策、善于激励团队。',work:'适合管理和领导岗位，在需要推动变革和达成挑战性目标时表现突出。'},
+  ENTP:{name:'辩论家',desc:'你是思维敏捷的创新者。喜欢挑战既有观点，善于从不同角度看问题。工作中，你充满创意，享受头脑风暴和智力碰撞，不喜欢循规蹈矩。你的直觉（N）让你总能想到新点子，感知（P）让你灵活应变。',strengths:'创新能力强、思维灵活、善于发现新机会、适应力强。',work:'适合需要创新和变革的工作，在创业或开拓新业务方向时如鱼得水。'},
+  INFJ:{name:'提倡者',desc:'你是安静而有力量的理想主义者。对人有深刻的洞察力，善于理解他人的情感和动机。工作中，你追求意义和价值，做事有始有终，对自己认可的事业投入极大热情。你的直觉（N）让你看到人的潜力，情感（F）让你充满同理心。',strengths:'洞察力强、有使命感、善于理解他人、坚持价值观。',work:'适合需要人文关怀和长远愿景的工作，在教育、咨询等领域有独特优势。'},
+  INFP:{name:'调停者',desc:'你是温柔而坚定的理想主义者。内心有丰富的情感世界，对美和意义有独特追求。工作中，你重视价值观的一致性，需要感受到工作的意义才能全力以赴。你的情感（F）让你富有同理心，感知（P）让你保持开放和灵活。',strengths:'富有创造力、同理心强、忠于价值观、善于发现人的闪光点。',work:'适合创意和人文领域，在需要个性表达和价值驱动的工作中表现最佳。'},
+  ENFJ:{name:'主人公',desc:'你是温暖而有感染力的人。天生善于理解他人需求，乐于帮助身边的人成长。工作中，你有很强的沟通协调能力，擅长营造积极的团队氛围。你的外向（E）让你充满亲和力，判断（J）让你有组织力。',strengths:'善于沟通、有同理心、乐于助人、团队凝聚力强。',work:'适合需要人际沟通和团队建设的岗位，在管理和培训角色中表现出色。'},
+  ENFP:{name:'竞选者',desc:'你是热情洋溢的创意家。对新鲜事物充满好奇，善于发现生活中的可能性。工作中，你充满激情和灵感，能带动团队士气，但有时需要关注执行细节。你的直觉（N）让你充满创意，情感（F）让你关注人的感受。',strengths:'热情有感染力、创意丰富、善于激发团队活力、适应力强。',work:'适合需要创意和人际互动的工作，在营销和品牌方向有独特优势。'},
+  ISTJ:{name:'物流师',desc:'你是踏实可靠的实干家。做事严谨有序，重视事实和经验，对规则和承诺高度尊重。工作中，你是团队中值得信赖的执行者，擅长管理流程和资源。你的感觉（S）让你注重细节，判断（J）让你有很强的计划性。',strengths:'责任心强、做事严谨、值得信赖、善于管理和执行。',work:'适合需要精确和可靠性的工作，在财务、运营和行政管理中表现优异。'},
+  ISFJ:{name:'守卫者',desc:'你是温暖而尽责的守护者。善于关注他人的需求，默默付出，是团队中不可或缺的支持力量。工作中，你做事细致周到，有很强的服务意识和忠诚度。你的感觉（S）让你注重实际，情感（F）让你关怀他人。',strengths:'细心负责、乐于助人、忠诚可靠、善于维护和谐。',work:'适合需要细心和服务的岗位，在行政支持和人力资源方向表现出色。'},
+  ESTJ:{name:'总经理',desc:'你是务实高效的组织者。善于建立秩序和规则，对完成目标有很强的执行力。工作中，你直截了当，重视效率和结果，善于统筹和管理资源。你的外向（E）让你善于表达，感觉（S）让你注重实际。',strengths:'执行力强、善于管理、注重效率、有责任担当。',work:'适合管理和运营岗位，在需要标准化和流程化的场景中表现突出。'},
+  ESFJ:{name:'执政官',desc:'你是热心周到的协调者。善于照顾身边人的感受，营造温暖的团队氛围。工作中，你重视和谐的合作关系，乐于组织活动和维护人际网络。你的情感（F）让你充满温度，判断（J）让你做事有条理。',strengths:'善于协调、热心助人、组织能力强、重视团队和谐。',work:'适合需要人际协调的岗位，在人力资源和客户服务中表现优异。'},
+  ISTP:{name:'鉴赏家',desc:'你是冷静灵活的实践者。善于动手解决问题，对工具和技术有天然敏感度。工作中，你喜欢探索事物的运作方式，在压力下保持冷静，灵活应对突发情况。你的感觉（S）让你注重实际，感知（P）让你随机应变。',strengths:'动手能力强、冷静理性、善于应变、擅长技术实践。',work:'适合技术和操作型工作，在工程和技术支持领域有独特优势。'},
+  ISFP:{name:'探险家',desc:'你是温和而敏感的艺术家。对美有独特感受力，喜欢用自己的方式表达内心世界。工作中，你不喜欢被规则束缚，需要一定的自由空间。你的感觉（S）让你注重当下体验，情感（F）让你有丰富的内心感受。',strengths:'审美敏锐、富有创造力、温和体贴、忠于自我。',work:'适合创意和设计类工作，在需要审美和个性表达的领域表现出色。'},
+  ESTP:{name:'企业家',desc:'你是精力充沛的行动派。善于抓住当下机会，喜欢充满挑战和变化的环境。工作中，你反应快、决断快，善于在行动中发现和解决问题。你的外向（E）让你善于社交，感知（P）让你灵活机动。',strengths:'行动力强、善于应变、敢于冒险、临场反应快。',work:'适合快节奏和挑战性的工作，在销售和商务拓展中表现突出。'},
+  ESFP:{name:'表演者',desc:'你是热情洋溢的乐天派。善于享受生活中的美好，也乐于把快乐带给身边人。工作中，你充满活力，善于活跃气氛，有很强的即兴发挥能力。你的情感（F）让你关注人的感受，感知（P）让你灵活自在。',strengths:'热情开朗、善于活跃气氛、有感染力、注重当下体验。',work:'适合需要表现力和人际互动的工作，在活动和公关方向表现出色。'}
+};
+
+// ==================== 状态管理 ====================
+var currentQ = 0;
+var answers = []; // 记录每题选择: 'a' or 'b'
+
+// ==================== 页面切换 ====================
+function showPage(id){
+  document.getElementById('page-welcome').style.display = (id==='welcome')?'flex':'none';
+  document.getElementById('page-quiz').style.display = (id==='quiz')?'flex':'none';
+  document.getElementById('page-result').style.display = (id==='result')?'flex':'none';
+}
+
+// ==================== 开始测评 ====================
+function startQuiz(){
+  currentQ = 0;
+  answers = [];
+  showPage('quiz');
+  renderQuestion();
+}
+
+// ==================== 渲染题目 ====================
+function renderQuestion(){
+  var q = questions[currentQ];
+  var total = questions.length;
+
+  // 进度
+  var pct = Math.round((currentQ) / total * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = (currentQ+1) + ' / ' + total;
+
+  // 题目区域
+  var area = document.getElementById('questionArea');
+  var sel = answers[currentQ] || '';
+
+  area.innerHTML =
+    '<div class="question-area fade-in">' +
+      '<div class="question-num">第 ' + (currentQ+1) + ' 题</div>' +
+      '<div class="question-text">' + q.q + '</div>' +
+      '<div class="options">' +
+        '<div class="option-btn' + (sel==='a'?' selected':'') + '" onclick="selectAnswer(\'a\')">' +
+          '<div class="opt-key">A</div><span>' + q.aText + '</span>' +
+        '</div>' +
+        '<div class="option-btn' + (sel==='b'?' selected':'') + '" onclick="selectAnswer(\'b\')">' +
+          '<div class="opt-key">B</div><span>' + q.bText + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  // 上一题按钮
+  document.getElementById('btnBack').disabled = (currentQ === 0);
+}
+
+// ==================== 选择答案 ====================
+function selectAnswer(opt){
+  answers[currentQ] = opt;
+
+  // 选中高亮
+  var btns = document.querySelectorAll('.option-btn');
+  btns.forEach(function(b,i){
+    if(i === (opt==='a'?0:1)) b.classList.add('selected');
+    else b.classList.remove('selected');
+  });
+
+  // 300ms后进入下一题
+  setTimeout(function(){
+    if(currentQ < questions.length - 1){
+      currentQ++;
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 300);
+}
+
+// ==================== 上一题 ====================
+function goPrev(){
+  if(currentQ > 0){
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+// ==================== 计算结果 ====================
+function calculateResult(){
+  var scores = {E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0};
+  var lastAnswer = {EI:'',SN:'',TF:'',JP:''};
+
+  for(var i=0; i<answers.length; i++){
+    var q = questions[i];
+    var choice = answers[i];
+    var side = (choice === 'a') ? q.a : q.b;
+    scores[side]++;
+    lastAnswer[q.dim] = side;
+  }
+
+  // 判定每个维度，平票取最后一题选择
+  var type = '';
+
+  // E/I
+  if(scores.E > scores.I) type += 'E';
+  else if(scores.I > scores.E) type += 'I';
+  else type += lastAnswer.EI;
+
+  // S/N
+  if(scores.S > scores.N) type += 'S';
+  else if(scores.N > scores.S) type += 'N';
+  else type += lastAnswer.SN;
+
+  // T/F
+  if(scores.T > scores.F) type += 'T';
+  else if(scores.F > scores.T) type += 'F';
+  else type += lastAnswer.TF;
+
+  // J/P
+  if(scores.J > scores.P) type += 'J';
+  else if(scores.P > scores.J) type += 'P';
+  else type += lastAnswer.JP;
+
+  // 各维度总数
+  var eiTotal = scores.E + scores.I;
+  var snTotal = scores.S + scores.N;
+  var tfTotal = scores.T + scores.F;
+  var jpTotal = scores.J + scores.P;
+
+  return {
+    type: type,
+    scores: scores,
+    dims: {
+      EI:{a:'E',b:'I',aVal:scores.E,bVal:scores.I,total:eiTotal},
+      SN:{a:'S',b:'N',aVal:scores.S,bVal:scores.N,total:snTotal},
+      TF:{a:'T',b:'F',aVal:scores.T,bVal:scores.F,total:tfTotal},
+      JP:{a:'J',b:'P',aVal:scores.J,bVal:scores.P,total:jpTotal}
+    }
+  };
+}
+
+// ==================== 显示结果 ====================
+function showResult(){
+  var result = calculateResult();
+  var typeData = mbtiTypes[result.type];
+
+  showPage('result');
+
+  // 类型
+  document.getElementById('resultType').textContent = result.type;
+  document.getElementById('resultName').textContent = typeData.name;
+
+  // 维度偏好条
+  var barsHtml = '';
+  var dimNames = {E:'外向',I:'内向',S:'感觉',N:'直觉',T:'思考',F:'情感',J:'判断',P:'感知'};
+  ['EI','SN','TF','JP'].forEach(function(d){
+    var info = result.dims[d];
+    var aPct = Math.round(info.aVal / info.total * 100);
+    var bPct = 100 - aPct;
+    barsHtml +=
+      '<div class="dim-bar">' +
+        '<div class="dim-label">' +
+          '<span class="dim-active">' + dimNames[info.a] + ' ' + aPct + '%</span>' +
+          '<span class="dim-inactive">' + bPct + '% ' + dimNames[info.b] + '</span>' +
+        '</div>' +
+        '<div class="dim-track">' +
+          '<div class="dim-fill-left" style="width:' + aPct + '%">' + aPct + '%</div>' +
+          '<div class="dim-fill-right" style="width:' + bPct + '%">' + bPct + '%</div>' +
+        '</div>' +
+      '</div>';
+  });
+  document.getElementById('dimBars').innerHTML = barsHtml;
+
+  // 描述
+  document.getElementById('resultDesc').innerHTML =
+    '<div class="desc-title">性格特征</div>' +
+    '<div class="desc-section">' + typeData.desc + '</div>' +
+    '<div class="desc-section"><strong>核心优势：</strong>' + typeData.strengths + '</div>' +
+    '<div class="desc-section"><strong>工作中的你：</strong>' + typeData.work + '</div>';
+}
+
+// ==================== 重新测评 ====================
+function resetQuiz(){
+  currentQ = 0;
+  answers = [];
+  showPage('welcome');
+}
+
+// ==================== 初始化 ====================
+showPage('welcome');
+</script>
+</body>
+</html>
